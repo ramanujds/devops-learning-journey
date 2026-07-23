@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: part-order-service-config
+  namespace: part-order-app
+data:
+  # dev profile -> H2 in-memory DB, no MySQL involved
+  SPRING_PROFILES_ACTIVE: "dev"
+  # same-namespace short DNS name for the inventory Service; used directly by
+  # the @FeignClient url attribute in InventoryServiceClient
+  INVENTORY_SERVICE_URL: "http://part-inventory-service:8080"

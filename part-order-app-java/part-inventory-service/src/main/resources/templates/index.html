@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Parts Inventory</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+        .card {
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.02);
+        }
+        .search-bar {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">Parts Inventory</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/inventory}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#addPartModal" data-bs-toggle="modal">Add Part</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="hero">
+    <div class="container">
+        <h1>Parts Inventory Management</h1>
+        <p>Manage your parts efficiently.</p>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Parts List</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPartModal">Add New Part</button>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search parts by name or SKU...">
+    </div>
+
+    <div class="row" id="partsContainer">
+        <div th:each="part : ${parts}" class="col-md-4 mb-4 part-card" th:data-name="${part.name}" th:data-sku="${part.sku}">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${part.name}"></h5>
+                    <p class="card-text">
+                        <strong>ID:</strong> <span th:text="${part.id}"></span><br>
+                        <strong>SKU:</strong> <span th:text="${part.sku}"></span><br>
+                        <strong>Price:</strong> $<span th:text="${part.price}"></span><br>
+                        <strong>Stock:</strong> <span th:text="${part.stock}"></span>
+                    </p>
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-info btn-sm" onclick="viewDetails(this)" th:data-id="${part.id}" th:data-sku="${part.sku}" th:data-name="${part.name}" th:data-price="${part.price}" th:data-stock="${part.stock}">View Details</button>
+                        <a th:href="@{/parts/{id}/edit(id=${part.id})}"
+                           class="btn btn-warning btn-sm">Edit</a>
+
+                        <form th:action="@{/parts/{id}/delete(id=${part.id})}"
+                              method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this part?')">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Part Modal -->
+<div class="modal fade" id="addPartModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Part</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/parts}"
+                  method="post" th:object="${part}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="sku" class="form-label">SKU:</label>
+                        <input type="text" id="sku" th:field="*{sku}" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name:</label>
+                        <input type="text" id="name" th:field="*{name}" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price:</label>
+                        <input type="number" step="0.01" id="price" th:field="*{price}" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stock" class="form-label">Stock:</label>
+                        <input type="number" id="stock" th:field="*{stock}" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Part</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="viewDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Part Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>ID:</strong> <span id="detailId"></span></p>
+                <p><strong>SKU:</strong> <span id="detailSku"></span></p>
+                <p><strong>Name:</strong> <span id="detailName"></span></p>
+                <p><strong>Price:</strong> $<span id="detailPrice"></span></p>
+                <p><strong>Stock:</strong> <span id="detailStock"></span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        document.querySelectorAll('.part-card').forEach(card => {
+            const name = card.getAttribute('data-name').toLowerCase();
+            const sku = card.getAttribute('data-sku').toLowerCase();
+            card.style.display = name.includes(query) || sku.includes(query) ? '' : 'none';
+        });
+    });
+
+    // View details
+    function viewDetails(button) {
+        document.getElementById('detailId').textContent = button.getAttribute('data-id');
+        document.getElementById('detailSku').textContent = button.getAttribute('data-sku');
+        document.getElementById('detailName').textContent = button.getAttribute('data-name');
+        document.getElementById('detailPrice').textContent = button.getAttribute('data-price');
+        document.getElementById('detailStock').textContent = button.getAttribute('data-stock');
+        new bootstrap.Modal(document.getElementById('viewDetailsModal')).show();
+    }
+</script>
+</body>
+</html>

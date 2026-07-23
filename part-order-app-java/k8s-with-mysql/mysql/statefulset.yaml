@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: part-order-app-mysql
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - name: mysql
+              containerPort: 3306
+          envFrom:
+            - secretRef:
+                name: mysql-secret
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: mysql-init-scripts
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi

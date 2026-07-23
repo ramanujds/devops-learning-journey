@@ -1,0 +1,27 @@
+# Runs once, only when the StatefulSet's PVC is first initialized (the
+# official mysql image only executes /docker-entrypoint-initdb.d/* against an
+# empty datadir). Creates one database + one scoped user per service, so
+# part-inventory-service and part-order-service can share this MySQL instance
+# without either one being able to touch the other's tables.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-scripts
+  namespace: part-order-app-mysql
+data:
+  init-users.sh: |
+    #!/bin/bash
+    set -e
+
+    mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" <<-EOSQL
+        CREATE DATABASE IF NOT EXISTS part_inventory_db;
+        CREATE DATABASE IF NOT EXISTS part_order_db;
+
+        CREATE USER IF NOT EXISTS 'inventory_app'@'%' IDENTIFIED BY '${INVENTORY_DB_PASSWORD}';
+        GRANT ALL PRIVILEGES ON part_inventory_db.* TO 'inventory_app'@'%';
+
+        CREATE USER IF NOT EXISTS 'order_app'@'%' IDENTIFIED BY '${ORDER_DB_PASSWORD}';
+        GRANT ALL PRIVILEGES ON part_order_db.* TO 'order_app'@'%';
+
+        FLUSH PRIVILEGES;
+    EOSQL

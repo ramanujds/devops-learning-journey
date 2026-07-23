@@ -1,0 +1,21 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: part-order-service
+
+#feign:
+#  client:
+#    config:
+#      inventory-service:
+#        url: ${INVENTORY_SERVICE_URL:http://localhost:8081}
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health

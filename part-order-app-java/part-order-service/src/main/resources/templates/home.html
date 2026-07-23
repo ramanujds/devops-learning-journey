@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Part Order Service - Homepage</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .card {
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/orders}">Part Order Service</a>
+        <button class="navbar-toggler" data-bs-target="#navbarNav" data-bs-toggle="collapse" type="button">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/orders}">View Orders</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/available-parts}">Browse Parts</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/place-order}">Place Order</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="hero">
+    <div class="container">
+        <h1>Welcome to Forvia Part Order Service</h1>
+        <p class="lead">Manage your parts inventory and orders seamlessly.</p>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Available Parts</h2>
+    </div>
+    <div class="alert alert-danger" role="alert" th:if="${error}">
+        <span th:text="${error}"></span>
+    </div>
+    <div class="row" th:if="${parts!=null and !parts.isEmpty()}">
+        <div class="col-md-4 mb-4" th:each="part : ${parts}">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${part.name}"></h5>
+                    <p class="card-text">
+                        <strong>SKU:</strong> <span th:text="${part.sku}"></span><br>
+                        <strong>Price:</strong> $<span th:text="${part.price}"></span><br>
+                        <strong>Stock:</strong> <span th:text="${part.stock}"></span>
+                    </p>
+                    <a class="btn btn-primary" th:href="@{/place-order(sku=${part.sku})}">Place Order</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-info" th:if="${parts.isEmpty() and error==null}">
+        No parts available at the moment.
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Recent Orders</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Order Number</th>
+                <th>Part SKU</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="order : ${orders}">
+                <td th:text="${order.orderNumber}"></td>
+                <td th:text="${order.partSku}"></td>
+                <td th:text="${order.quantity}"></td>
+                <td th:text="${order.status}"></td>
+                <td th:text="${order.timestamp}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

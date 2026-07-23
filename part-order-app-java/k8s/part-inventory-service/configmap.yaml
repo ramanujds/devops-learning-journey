@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: part-inventory-service-config
+  namespace: part-order-app
+data:
+  # dev profile -> H2 in-memory DB (schema.sql/data.sql), no MySQL involved
+  SPRING_PROFILES_ACTIVE: "dev"

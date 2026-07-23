@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: part-order-service-config
+  namespace: part-order-app-mysql
+data:
+  # prod profile -> MySQL via application-prod.yml (ddl-auto: update, so
+  # Hibernate creates the schema on first boot; sql.init.mode is "never" so
+  # schema.sql/data.sql do NOT run - the DB starts empty, unlike the dev/H2 stack)
+  SPRING_PROFILES_ACTIVE: "prod"
+  # shared MySQL instance (see ../mysql/) - part_order_db is a database on
+  # it, not a separate server
+  MYSQL_HOST: "mysql"
+  MYSQL_PORT: "3306"
+  # application-prod.yml's own default here is wrong (part_inventory_db,
+  # copy-paste leftover) - set explicitly so this DB doesn't collide with
+  # the inventory service's database
+  MYSQL_DATABASE: "part_order_db"
+  MYSQL_USER: "order_app"
+  # same-namespace short DNS name for the inventory Service; used directly by
+  # the @FeignClient url attribute in InventoryServiceClient
+  INVENTORY_SERVICE_URL: "http://part-inventory-service:8080"

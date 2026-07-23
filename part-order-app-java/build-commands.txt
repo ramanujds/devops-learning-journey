@@ -1,0 +1,4 @@
+docker buildx build --platform linux/amd64 -t ram1uj/part-inventory-service:latest .
+
+
+docker buildx build --platform linux/amd64 -t ram1uj/part-order-service:latest .

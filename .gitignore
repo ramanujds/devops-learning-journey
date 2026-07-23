@@ -1,0 +1,23 @@
+CLAUDE.md
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### IDE ###
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+### Java / Maven ###
+target/
+*.class
+
+### Logs ###
+logs/
+*.log
+
+### Node ###
+node_modules/
