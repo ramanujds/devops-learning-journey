@@ -1,0 +1,122 @@
+# Requires the `PrometheusRule` CRD — i.e. kube-prometheus-stack, not the
+# standalone prometheus-community/prometheus chart used in setup-and-run.md.
+# For that chart, use prometheus-rules-values.yaml instead.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: parts-app-alerts
+  namespace: default
+  labels:
+    app: prometheus
+spec:
+  groups:
+    - name: parts-app
+      interval: 30s
+      rules:
+
+        # Pod not ready for more than 2 minutes
+        - alert: PodNotReady
+          expr: |
+            kube_pod_status_ready{condition="false", namespace=~"inventory-service|order-service"}
+            > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} is not ready"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for 2 minutes."
+
+        # Deployment has fewer ready replicas than desired
+        - alert: DeploymentReplicasMismatch
+          expr: |
+            kube_deployment_status_replicas_ready
+              != kube_deployment_spec_replicas
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Deployment {{ $labels.deployment }} has replica mismatch"
+            description: "{{ $labels.deployment }} has {{ $value }} ready replicas but {{ $labels.spec_replicas }} desired."
+
+        # High error rate — more than 1% of requests are 5xx
+        - alert: HighErrorRate
+          expr: |
+            sum by (application) (
+              rate(http_server_requests_seconds_count{status=~"5.."}[5m])
+            )
+            /
+            sum by (application) (
+              rate(http_server_requests_seconds_count[5m])
+            )
+            > 0.01
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate on {{ $labels.application }}"
+            description: "{{ $labels.application }} has {{ $value | humanizePercentage }} error rate."
+
+        # p95 latency above 1 second
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum by (le, application) (
+                rate(http_server_requests_seconds_bucket[5m])
+              )
+            ) > 1.0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High p95 latency on {{ $labels.application }}"
+            description: "p95 latency is {{ $value }}s on {{ $labels.application }}."
+
+        # Pod OOMKilled
+        - alert: PodOOMKilled
+          expr: |
+            kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}
+            == 1
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} OOMKilled"
+            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} was OOMKilled. Increase memory limits."
+
+        # Container restarting repeatedly
+        - alert: ContainerFrequentRestarts
+          expr: |
+            increase(kube_pod_container_status_restarts_total[15m]) > 3
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Container {{ $labels.container }} restarting frequently"
+            description: "{{ $labels.container }} in {{ $labels.pod }} restarted {{ $value }} times in the last 15 minutes."
+
+        # Node CPU above 85%
+        - alert: NodeHighCPU
+          expr: |
+            (1 - avg by (node) (
+              rate(node_cpu_seconds_total{mode="idle"}[5m])
+            )) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.node }} CPU above 85%"
+            description: "Node {{ $labels.node }} CPU utilisation is {{ $value | humanizePercentage }}."
+
+        # Node memory above 90%
+        - alert: NodeHighMemory
+          expr: |
+            (1 - (
+              node_memory_MemAvailable_bytes /
+              node_memory_MemTotal_bytes
+            )) > 0.90
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.instance }} memory above 90%"
+            description: "Node {{ $labels.instance }} memory usage is {{ $value | humanizePercentage }}."

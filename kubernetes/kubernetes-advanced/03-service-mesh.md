@@ -62,6 +62,47 @@ Istio what you want that sidecar to do.
 
 ---
 
+## But doesn't Kubernetes already do this?
+
+Fair objection: a Kubernetes **Service** already gives
+`part-order-service` a stable DNS name and spreads its calls across
+every healthy `part-inventory-service` Pod. And Spring Boot already has
+resilience4j for retries and circuit breakers. So what's actually
+missing?
+
+```mermaid
+flowchart LR
+    K8s["Kubernetes Service:\nWHICH Pod does this\nrequest go to?"]
+    Istio["Istio:\nWHAT HAPPENS to it\non the way there?"]
+```
+
+Three concrete gaps a plain Service + app-level libraries leave open:
+
+1. **`kube-proxy` doesn't speak HTTP.** It only knows binary readiness —
+   Pod is Ready, or it isn't. If a `part-inventory-service` Pod is Ready
+   but returning 500s under load, a plain Service keeps sending it a
+   third of the traffic anyway. It has no concept of "this Pod is
+   unhealthy *right now*" — only "did the readiness probe pass." That's
+   the gap `outlierDetection` (Use case 3) actually fills.
+2. **resilience4j only helps if every service is Java.** The real cost
+   isn't whether Spring Boot *can* retry — it's that the moment
+   `part-inventory-service` gets rewritten in Go, or a Node.js service
+   joins, that logic gets reimplemented, in a different library, with
+   different defaults, by a different team. A sidecar doesn't care what
+   language the app is; the same config applies unchanged.
+3. **mTLS is a different order of problem than retries.** Doing it at
+   the app level means every service issuing, rotating, and trusting
+   certificates itself — real PKI infrastructure, duplicated per
+   service, not a Spring Boot annotation. Use case 1 below is one YAML
+   object precisely because a mesh already has this solved centrally.
+
+None of this replaces the Kubernetes Service — Istio's sidecars actually
+read the *same* Endpoints data Kubernetes already tracks to know where
+`part-inventory-service`'s Pods are. It adds a layer on top that's aware
+of HTTP, identity, and policy, instead of just IP:port.
+
+---
+
 ## Use case 1: encrypt traffic between the two services
 
 Today, `part-order-service` → `part-inventory-service` is plain HTTP.
@@ -212,15 +253,27 @@ service reports anything about the other, without either one logging it.
 
 ## Is this worth it for a 2-service app?
 
-Probably not yet — that's an honest answer. A mesh earns its keep once
-you have enough services that hand-writing retries/TLS/metrics in every
-one of them (in every language they're written in) is more work than
-running Istio itself. For just `part-order-service` and
-`part-inventory-service`, plain
+Probably not yet — that's an honest answer. With just
+`part-order-service` and `part-inventory-service`, both Spring Boot, one
+team — resilience4j plus the Kubernetes Service you already have is
+genuinely sufficient. Plain
 [NetworkPolicy](../kubernetes-intermediate/04-networking-policy.md) and a
-readiness probe cover most of what you actually need day-to-day. Reach
-for a mesh once a third, fourth, fifth service joins and that duplication
-becomes real.
+readiness probe cover most of what you actually need day-to-day.
+
+The math flips once any of these become true instead:
+
+- a third service joins in a **different language**, and the retry/TLS
+  logic would otherwise get reimplemented a third way
+- you have a **compliance requirement** like "prove every internal call
+  is encrypted" — provable once, centrally, is very different from
+  trusting every team implemented it correctly
+- a Pod that's technically Ready is still **serving errors**, and you
+  want that noticed without every caller's library catching it
+  independently
+
+Until one of those is real, running Istio is net overhead, not net
+simplification — reach for it when the duplication itself becomes the
+problem, not before.
 
 ---
 

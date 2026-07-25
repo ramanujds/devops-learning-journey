@@ -1,0 +1,372 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Logs and metrics for part-inventory-service and part-order-service",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["spring-boot", "loki", "prometheus", "kubernetes"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Prometheus",
+        "name": "prometheus_ds",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Loki",
+        "name": "loki_ds",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Spring Boot Services",
+  "uid": "spring-boot-services",
+  "version": 1,
+  "panels": [
+
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Inventory - Errors (1h)",
+      "datasource": { "type": "loki", "uid": "${loki_ds}" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_ds}" },
+          "expr": "sum(count_over_time({app=\"part-inventory-service\", level=\"ERROR\"}[1h]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Order - Errors (1h)",
+      "datasource": { "type": "loki", "uid": "${loki_ds}" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_ds}" },
+          "expr": "sum(count_over_time({app=\"part-order-service\", level=\"ERROR\"}[1h]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Inventory - Total Logs (1h)",
+      "datasource": { "type": "loki", "uid": "${loki_ds}" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_ds}" },
+          "expr": "sum(count_over_time({app=\"part-inventory-service\"}[1h]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Order - Total Logs (1h)",
+      "datasource": { "type": "loki", "uid": "${loki_ds}" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_ds}" },
+          "expr": "sum(count_over_time({app=\"part-order-service\"}[1h]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Log Volume by Level",
+      "datasource": { "type": "loki", "uid": "${loki_ds}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "ERROR" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "WARN" },  "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "INFO" },  "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "DEBUG" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_ds}" },
+          "expr": "sum by (app, level) (count_over_time({job=\"spring-boot\"}[$__interval]))",
+          "legendFormat": "{{app}} - {{level}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "HTTP Request Rate (req/s)",
+      "datasource": { "type": "prometheus", "uid": "${prometheus_ds}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "unit": "reqps"
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${prometheus_ds}" },
+          "expr": "sum by (application) (rate(http_server_requests_seconds_count{application=~\"part-inventory-service|part-order-service\"}[$__rate_interval]))",
+          "legendFormat": "{{application}}",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "HTTP p99 Latency (ms)",
+      "datasource": { "type": "prometheus", "uid": "${prometheus_ds}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "unit": "ms"
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${prometheus_ds}" },
+          "expr": "histogram_quantile(0.99, sum by (application, le) (rate(http_server_requests_seconds_bucket{application=~\"part-inventory-service|part-order-service\"}[$__rate_interval]))) * 1000",
+          "legendFormat": "p99 - {{application}}",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "JVM Heap Memory Used",
+      "datasource": { "type": "prometheus", "uid": "${prometheus_ds}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "unit": "bytes"
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${prometheus_ds}" },
+          "expr": "sum by (application) (jvm_memory_used_bytes{application=~\"part-inventory-service|part-order-service\", area=\"heap\"})",
+          "legendFormat": "{{application}}",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "JVM Threads",
+      "datasource": { "type": "prometheus", "uid": "${prometheus_ds}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "unit": "short"
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${prometheus_ds}" },
+          "expr": "sum by (application) (jvm_threads_live_threads{application=~\"part-inventory-service|part-order-service\"})",
+          "legendFormat": "{{application}}",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 10,
+      "type": "logs",
+      "title": "part-inventory-service - Logs",
+      "datasource": { "type": "loki", "uid": "${loki_ds}" },
+      "gridPos": { "h": 12, "w": 12, "x": 0, "y": 28 },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_ds}" },
+          "expr": "{app=\"part-inventory-service\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 11,
+      "type": "logs",
+      "title": "part-order-service - Logs",
+      "datasource": { "type": "loki", "uid": "${loki_ds}" },
+      "gridPos": { "h": 12, "w": 12, "x": 12, "y": 28 },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_ds}" },
+          "expr": "{app=\"part-order-service\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    }
+
+  ]
+}

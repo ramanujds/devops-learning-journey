@@ -1,0 +1,48 @@
+# Loki Helm values — single-binary mode, filesystem storage (suitable for local/dev clusters)
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+
+# Disable read/write/backend components (not needed in single-binary mode)
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+
+# Disable built-in self-monitoring (requires Grafana Agent operator)
+monitoring:
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  lokiCanary:
+    enabled: false
+  tests:
+    enabled: false
+
+# Disable memcached-based caching — chunksCache defaults to an 8Gi memory
+# request, which alone won't schedule on a typical single-node local cluster.
+# Pure perf optimizations, not needed for correctness at dev/test log volumes.
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false

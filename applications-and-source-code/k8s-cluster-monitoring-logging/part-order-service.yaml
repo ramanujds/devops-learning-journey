@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: part-order-service
+spec:
+  selector:
+    app: part-order-service
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30082

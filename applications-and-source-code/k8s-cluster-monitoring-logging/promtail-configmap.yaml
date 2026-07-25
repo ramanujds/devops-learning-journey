@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 9080
+      grpc_listen_port: 0
+
+    positions:
+      filename: /tmp/positions.yaml
+
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+
+    scrape_configs:
+      - job_name: spring-boot-logs
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: spring-boot
+              app: ${APP_NAME}
+              __path__: /app/logs/*.log
+        pipeline_stages:
+          # Collapse multiline Java stack traces into a single log entry
+          - multiline:
+              firstline: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+              max_wait_time: 3s
+          # Extract log level from the standard logback pattern
+          - regex:
+              expression: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} \[[^\]]+\] (?P<level>\w+) '
+          - labels:
+              level:

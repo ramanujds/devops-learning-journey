@@ -16,3 +16,7 @@ spring:
   sql:
     init:
       mode: never
+
+logging:
+  file:
+    name: logs/application.log

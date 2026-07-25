@@ -1,0 +1,23 @@
+# Grafana Helm values — adds Prometheus + Loki as provisioned datasources
+# Use this to install/upgrade the Grafana Helm release:
+#   helm install grafana grafana/grafana --version 8.12.0 -f grafana-values.yaml
+#   helm upgrade grafana grafana/grafana --version 8.12.0 -f grafana-values.yaml
+
+adminUser: admin
+adminPassword: "admin123"
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server:80
+        access: proxy
+        isDefault: true
+
+      - name: Loki
+        type: loki
+        url: http://loki:3100
+        access: proxy
+        isDefault: false

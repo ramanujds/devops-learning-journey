@@ -1,0 +1,19 @@
+# For the standalone prometheus-community/prometheus chart (no PrometheusRule
+# CRD available) — apply with:
+#   helm upgrade prometheus prometheus-community/prometheus -f prometheus-rules-values.yaml
+#
+# Only PodNotReady is shown here as a minimal example; port the rest of the
+# `groups` block from prometheus-rules.yaml's `spec.groups` if you need the
+# full alert set under this chart instead of kube-prometheus-stack.
+serverFiles:
+  alerting_rules.yml:
+    groups:
+      - name: parts-app
+        rules:
+          - alert: PodNotReady
+            expr: kube_pod_status_ready{condition="false"} > 0
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod {{ $labels.pod }} not ready"
