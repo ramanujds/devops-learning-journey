@@ -54,6 +54,8 @@ concept.
 | [04-networking-policy.md](kubernetes-intermediate/04-networking-policy.md) | Locking down the flat cluster network with NetworkPolicy (ingress + egress rules) |
 | [05-sidecars.md](kubernetes-intermediate/05-sidecars.md) | Multi-container Pods — logging, service-mesh proxy, Vault Agent, ambassador, and adapter patterns |
 | [06-helm.md](kubernetes-intermediate/06-helm.md) | Packaging and templating manifests across environments instead of hand-copying YAML |
+| [07-kubernetes-on-cloud.md](kubernetes-intermediate/07-kubernetes-on-cloud.md) | Creating a real cluster on EKS, GKE, and AKS — same concept as local clusters, provisioned by a cloud provider |
+| [08-node-selection.md](kubernetes-intermediate/08-node-selection.md) | Controlling Pod placement: nodeSelector, node/pod affinity & anti-affinity, taints/tolerations, topology spread constraints — on a 3-node minikube cluster |
 
 ---
 

@@ -1,0 +1,10 @@
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: part-order-app-istio
+spec:
+  # require mTLS for every mesh service in this namespace — istiod issues
+  # and rotates the certs, neither Spring Boot app knows TLS is involved
+  mtls:
+    mode: STRICT

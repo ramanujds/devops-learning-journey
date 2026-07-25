@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: part-order-app-istio
+  labels:
+    env: dev
+    # this is the whole trigger for sidecar injection — Istio's mutating
+    # webhook adds an istio-proxy container to every Pod created here
+    istio-injection: enabled
