@@ -1,0 +1,24 @@
+# Requires the MySQL Operator (github.com/mysql/mysql-operator) and its
+# CRDs already installed cluster-wide - see NOTES.md "Prerequisite" section,
+# same install steps as
+# ../../../kubernetes/kubernetes-advanced/05-mysql-operator-example.md.
+#
+# 3 instances + Group Replication, in place of the single-Pod
+# ../../k8s-with-mysql/mysql/statefulset.yaml. The Operator turns this one
+# object into a StatefulSet, a Router Deployment, and both Services below.
+apiVersion: mysql.oracle.com/v2
+kind: InnoDBCluster
+metadata:
+  name: mycluster
+  namespace: part-order-app-mysql-operator
+spec:
+  secretName: mycluster-creds
+  tlsUseSelfSigned: true
+  instances: 3
+  router:
+    instances: 1
+  datadirVolumeClaimTemplate:
+    accessModes: ["ReadWriteOnce"]
+    resources:
+      requests:
+        storage: 2Gi

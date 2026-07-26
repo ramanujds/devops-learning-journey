@@ -85,9 +85,10 @@ public class PartController {
         if (part.getStock() < orderRequest.quantity()) {
             return ResponseEntity.badRequest().body(new OrderResponseDto("", "Insufficient stock",0,0));
         }
+        double totalPrice = part.getPrice() != null ? part.getPrice().doubleValue() * orderRequest.quantity() : 0;
         part.setStock(part.getStock() - orderRequest.quantity());
         partRepository.save(part);
-        return ResponseEntity.ok(new OrderResponseDto(part.getSku(), "Order placed successfully", orderRequest.quantity(), part.getPrice().doubleValue() * orderRequest.quantity()));
+        return ResponseEntity.ok(new OrderResponseDto(part.getSku(), "Order placed successfully", orderRequest.quantity(), totalPrice));
     }
 
 
