@@ -71,6 +71,16 @@ Same image, two containers, no interference between them.
 
 ---
 
+
+## Run Inventory Container
+
+
+```bash
+docker pull ram1uj/part-inventory-service
+docker run -d --name inventory-app -p 8081:8080 ram1uj/part-inventory-service
+```
+
+
 ## A container has a lifecycle — an image doesn't
 
 ```mermaid
