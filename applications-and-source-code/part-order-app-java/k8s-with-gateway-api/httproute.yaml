@@ -1,0 +1,69 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: parts-route
+  namespace: part-order-app-gateway
+spec:
+  parentRefs:
+    - name: parts-gateway
+  rules:
+    # More specific rule first: part-inventory-service's REST API. Mirrors
+    # the /api/parts path rule in ../k8s-with-ingress/ingress.yaml exactly -
+    # same reasoning, same backend, verified working there.
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/parts
+      backendRefs:
+        - name: part-inventory-service
+          port: 8080
+
+      # --- Traffic splitting, illustrated but not enabled ---
+      # Gateway API's backendRefs support weighted splits natively, no
+      # controller-specific annotation needed (unlike Ingress, where this is
+      # a per-controller extension - e.g. nginx.ingress.kubernetes.io/canary-weight).
+      # Uncomment + add a v2 Deployment/Service to try a canary rollout of
+      # part-inventory-service:
+      #   - name: part-inventory-service
+      #     port: 8080
+      #     weight: 90
+      #   - name: part-inventory-service-v2
+      #     port: 8080
+      #     weight: 10
+
+    # Catch-all: part-order-service's UI (/, /home, /orders,
+    # /available-parts, /place-order) and its own REST API
+    # (/api/part-orders/*) - all already covered since they don't collide
+    # with /api/parts above.
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: part-order-service
+          port: 8080
+
+# --- Exposing part-inventory-service's web UI, illustrated but not enabled ---
+# ../k8s-with-ingress/NOTES.md documents why the inventory web UI (mounted at
+# "/" in the app itself: index.html, /inventory, /inventory-update, /parts/*
+# forms) can't be exposed there - it collides with part-order-service's own
+# root, and Ingress has no portable way to rewrite the path before it reaches
+# the backend. Gateway API's URLRewrite filter *is* a portable, core-ish
+# feature (support varies by implementation - verify against your Gateway
+# controller's conformance report) that solves exactly this: front the
+# inventory UI at /inventory-ui/* and strip that prefix before forwarding, so
+# the app still sees requests at its real paths ("/", "/inventory", ...).
+# Add this as a third rule to try it:
+#   - matches:
+#       - path:
+#           type: PathPrefix
+#           value: /inventory-ui
+#     filters:
+#       - type: URLRewrite
+#         urlRewrite:
+#           path:
+#             type: ReplacePrefixMatch
+#             replacePrefixMatch: /
+#     backendRefs:
+#       - name: part-inventory-service
+#         port: 8080

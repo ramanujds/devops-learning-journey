@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: part-order-service
+  namespace: part-order-app-gateway
+  labels:
+    app: part-order-service
+spec:
+  # No cloud.google.com/neg annotation needed (unlike ../k8s-with-ingress):
+  # GKE's Gateway API implementation always container-native load-balances
+  # (NEGs) any Service referenced by an HTTPRoute, no annotation required.
+  type: ClusterIP
+  selector:
+    app: part-order-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: part-inventory-service
+  namespace: part-order-app-gateway
+  labels:
+    app: part-inventory-service
+spec:
+  # single replica: dev profile uses per-pod H2 in-memory DB, so state isn't
+  # shared across replicas. Bump this once a real shared DB is wired up.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: part-inventory-service
+  template:
+    metadata:
+      labels:
+        app: part-inventory-service
+    spec:
+      containers:
+        - name: part-inventory-service
+          image: ram1uj/part-inventory-service:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: part-inventory-service-config
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            # Widened from the more common 20/10/3 defaults: on constrained
+            # nodes this Spring Boot 4 / Java 21 app can take 60+ seconds to
+            # boot (JVM cold start under a 500m CPU limit) - see ../k8s-with-ingress/NOTES.md
+            # for the crash-loop this caused when first tested at tighter values.
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
