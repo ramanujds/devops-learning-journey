@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: part-order-service
+  namespace: part-order-app-ingress
+  labels:
+    app: part-order-service
+  annotations:
+    # Tells the GKE (gce) Ingress controller to load-balance straight to pod
+    # IPs via a Network Endpoint Group instead of NodePort + kube-proxy.
+    # Harmless no-op for other Ingress controllers (e.g. nginx) - they ignore
+    # annotations they don't recognize, so this Service works unchanged if
+    # you switch ingressClassName to "nginx" (see NOTES.md).
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  # ClusterIP, not NodePort: the Ingress controller (GCE or nginx) is what's
+  # externally reachable, and it routes to this Service internally.
+  type: ClusterIP
+  selector:
+    app: part-order-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

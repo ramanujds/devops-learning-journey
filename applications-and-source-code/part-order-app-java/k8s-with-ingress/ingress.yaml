@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: part-order-app-ingress
+  namespace: part-order-app-ingress
+spec:
+  # "gce" is the built-in IngressClass on GKE (Google Cloud Load Balancer,
+  # no controller Deployment to install). Switch this one field to "nginx"
+  # to move to an ingress-nginx controller - see NOTES.md.
+  ingressClassName: gce
+  rules:
+    - http:
+        paths:
+          # More specific path first: part-inventory-service's REST API,
+          # reachable directly (bypassing the part-order-service Feign hop)
+          # for debugging/inspection. Its web UI (mounted at "/") isn't
+          # routable here since it collides with part-order-service's own
+          # root path - only /api/parts is exposed.
+          - path: /api/parts
+            pathType: Prefix
+            backend:
+              service:
+                name: part-inventory-service
+                port:
+                  number: 8080
+          # Catch-all: the human-facing UI.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: part-order-service
+                port:
+                  number: 8080

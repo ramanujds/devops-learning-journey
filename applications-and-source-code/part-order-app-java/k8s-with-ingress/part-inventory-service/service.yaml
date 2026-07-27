@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: part-inventory-service
+  namespace: part-order-app-ingress
+  labels:
+    app: part-inventory-service
+  annotations:
+    # Same container-native load balancing as part-order-service - required
+    # now that the Ingress also routes a path (/api/parts) to this Service.
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  # ClusterIP: reached both internally (Feign, from part-order-service) and
+  # externally via the Ingress's /api/parts path rule - never via NodePort.
+  type: ClusterIP
+  selector:
+    app: part-inventory-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
