@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "part-order-app.inventoryServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "part-order-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: part-inventory-service
+spec:
+  type: {{ .Values.partInventoryService.service.type }}
+  selector:
+    {{- include "part-order-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: part-inventory-service
+  ports:
+    - name: http
+      port: {{ .Values.partInventoryService.service.port }}
+      targetPort: http
+      {{- if and (eq .Values.partInventoryService.service.type "NodePort") .Values.partInventoryService.service.nodePort }}
+      nodePort: {{ .Values.partInventoryService.service.nodePort }}
+      {{- end }}

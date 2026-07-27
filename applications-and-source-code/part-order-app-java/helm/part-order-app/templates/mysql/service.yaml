@@ -1,0 +1,21 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "part-order-app.mysqlName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "part-order-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mysql
+spec:
+  # headless: gives the StatefulSet pod a stable DNS name, no load-balancing
+  # needed since there's a single MySQL instance
+  clusterIP: None
+  selector:
+    {{- include "part-order-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+{{- end }}

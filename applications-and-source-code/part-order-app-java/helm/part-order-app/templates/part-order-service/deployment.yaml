@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "part-order-app.orderServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "part-order-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: part-order-service
+spec:
+  replicas: {{ .Values.partOrderService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "part-order-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: part-order-service
+  template:
+    metadata:
+      labels:
+        {{- include "part-order-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: part-order-service
+    spec:
+      {{- if .Values.mysql.enabled }}
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z {{ include "part-order-app.mysqlName" . }} 3306; do echo waiting for mysql; sleep 2; done
+      {{- end }}
+      containers:
+        - name: part-order-service
+          image: "{{ .Values.partOrderService.image.repository }}:{{ .Values.partOrderService.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: {{ include "part-order-app.orderServiceName" . }}-config
+          {{- if .Values.mysql.enabled }}
+          env:
+            # pulled individually (not envFrom the whole secret) so the app
+            # pod never sees MYSQL_ROOT_PASSWORD or the inventory service's password
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "part-order-app.mysqlSecretName" . }}
+                  key: ORDER_DB_PASSWORD
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.partOrderService.readinessProbe.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.partOrderService.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.partOrderService.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.partOrderService.readinessProbe.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.partOrderService.livenessProbe.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.partOrderService.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.partOrderService.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.partOrderService.livenessProbe.failureThreshold }}
+          resources:
+            {{- toYaml .Values.partOrderService.resources | nindent 12 }}

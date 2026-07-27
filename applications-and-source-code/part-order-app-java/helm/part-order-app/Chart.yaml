@@ -1,0 +1,12 @@
+apiVersion: v2
+name: part-order-app
+description: >-
+  Helm chart for the part-order-app-java reference app (part-inventory-service
+  + part-order-service), with an optional shared MySQL StatefulSet backend.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - spring-boot
+  - kubernetes-learning
+  - reference-app

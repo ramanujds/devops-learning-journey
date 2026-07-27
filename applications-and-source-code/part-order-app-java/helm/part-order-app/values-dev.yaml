@@ -1,0 +1,22 @@
+# Dev overlay - H2 in-memory DB, no MySQL. Mirrors ../../k8s/.
+#
+# This is intentionally close to a no-op on top of values.yaml's defaults;
+# it exists so `-f values-dev.yaml` is explicit and symmetric with
+# values-prod.yaml, and as the place to grow dev-only overrides later.
+#
+#   helm install part-order-app . -f values-dev.yaml \
+#     --namespace part-order-app --create-namespace
+
+springProfile: dev
+
+partInventoryService:
+  replicaCount: 1
+
+partOrderService:
+  replicaCount: 1
+  service:
+    type: NodePort
+    nodePort: 30080
+
+mysql:
+  enabled: false

@@ -1,0 +1,32 @@
+# Prod overlay - shared MySQL StatefulSet (two databases, two scoped users),
+# 2 replicas per service now that state lives in MySQL instead of per-pod.
+# Mirrors ../../k8s-with-mysql/.
+#
+#   helm install part-order-app . -f values-prod.yaml \
+#     --namespace part-order-app-mysql --create-namespace
+#
+# The mysql.auth passwords below are the same dev-safe placeholders as
+# values.yaml's defaults, repeated here for visibility - override with
+# --set mysql.auth.rootPassword=... (etc.) or --set mysql.existingSecret=...
+# for anything beyond local learning use.
+
+springProfile: prod
+
+partInventoryService:
+  # state now lives in MySQL, not per-pod, so this can safely run >1 replica
+  replicaCount: 2
+
+partOrderService:
+  replicaCount: 2
+  service:
+    type: NodePort
+    # distinct from values-dev.yaml's 30080 - NodePorts are cluster-wide, so
+    # this stays free in case both stacks are installed side by side
+    nodePort: 30081
+
+mysql:
+  enabled: true
+  auth:
+    rootPassword: dev-root-pw
+    inventoryDbPassword: dev-inventory-pw
+    orderDbPassword: dev-order-pw

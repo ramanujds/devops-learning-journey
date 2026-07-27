@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "part-order-app.inventoryServiceName" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "part-order-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: part-inventory-service
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.springProfile | quote }}
+  {{- if .Values.mysql.enabled }}
+  MYSQL_HOST: {{ include "part-order-app.mysqlName" . | quote }}
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: {{ .Values.mysql.inventoryDatabase | quote }}
+  MYSQL_USER: {{ .Values.mysql.inventoryUser | quote }}
+  {{- end }}

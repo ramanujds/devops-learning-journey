@@ -1,0 +1,23 @@
+part-order-app ({{ .Chart.AppVersion }}) is deployed to namespace {{ .Release.Namespace }}.
+
+Profile: {{ .Values.springProfile }}
+MySQL:   {{ if .Values.mysql.enabled }}enabled ({{ include "part-order-app.mysqlName" . }}, {{ .Values.mysql.inventoryDatabase }} / {{ .Values.mysql.orderDatabase }}){{ else }}disabled (H2 in-memory, per pod){{ end }}
+
+part-order-service ({{ .Values.partOrderService.replicaCount }} replica(s), {{ .Values.partOrderService.service.type }}):
+{{- if eq .Values.partOrderService.service.type "NodePort" }}
+  Visit http://<node-ip>:{{ .Values.partOrderService.service.nodePort }}
+  (minikube: `minikube service {{ include "part-order-app.orderServiceName" . }} -n {{ .Release.Namespace }}`)
+{{- else }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "part-order-app.orderServiceName" . }} 8080:{{ .Values.partOrderService.service.port }}
+{{- end }}
+
+part-inventory-service ({{ .Values.partInventoryService.replicaCount }} replica(s)) is internal-only (ClusterIP),
+reached by part-order-service via:
+  http://{{ include "part-order-app.inventoryServiceName" . }}:{{ .Values.partInventoryService.service.port }}
+
+Check rollout status:
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "part-order-app.inventoryServiceName" . }}
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "part-order-app.orderServiceName" . }}
+{{- if .Values.mysql.enabled }}
+  kubectl -n {{ .Release.Namespace }} rollout status statefulset/{{ include "part-order-app.mysqlName" . }}
+{{- end }}

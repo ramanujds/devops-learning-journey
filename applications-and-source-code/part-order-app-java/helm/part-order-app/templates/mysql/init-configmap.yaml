@@ -1,0 +1,32 @@
+{{- if .Values.mysql.enabled }}
+# Runs once, only when the StatefulSet's PVC is first initialized (the
+# official mysql image only executes /docker-entrypoint-initdb.d/* against an
+# empty datadir). Creates one database + one scoped user per service, so
+# part-inventory-service and part-order-service can share this MySQL instance
+# without either one being able to touch the other's tables.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "part-order-app.mysqlName" . }}-init-scripts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "part-order-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mysql
+data:
+  init-users.sh: |
+    #!/bin/bash
+    set -e
+
+    mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" <<-EOSQL
+        CREATE DATABASE IF NOT EXISTS {{ .Values.mysql.inventoryDatabase }};
+        CREATE DATABASE IF NOT EXISTS {{ .Values.mysql.orderDatabase }};
+
+        CREATE USER IF NOT EXISTS '{{ .Values.mysql.inventoryUser }}'@'%' IDENTIFIED BY '${INVENTORY_DB_PASSWORD}';
+        GRANT ALL PRIVILEGES ON {{ .Values.mysql.inventoryDatabase }}.* TO '{{ .Values.mysql.inventoryUser }}'@'%';
+
+        CREATE USER IF NOT EXISTS '{{ .Values.mysql.orderUser }}'@'%' IDENTIFIED BY '${ORDER_DB_PASSWORD}';
+        GRANT ALL PRIVILEGES ON {{ .Values.mysql.orderDatabase }}.* TO '{{ .Values.mysql.orderUser }}'@'%';
+
+        FLUSH PRIVILEGES;
+    EOSQL
+{{- end }}

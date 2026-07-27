@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "part-order-app.orderServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "part-order-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: part-order-service
+spec:
+  type: {{ .Values.partOrderService.service.type }}
+  selector:
+    {{- include "part-order-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: part-order-service
+  ports:
+    - name: http
+      port: {{ .Values.partOrderService.service.port }}
+      targetPort: http
+      {{- if and (eq .Values.partOrderService.service.type "NodePort") .Values.partOrderService.service.nodePort }}
+      nodePort: {{ .Values.partOrderService.service.nodePort }}
+      {{- end }}
