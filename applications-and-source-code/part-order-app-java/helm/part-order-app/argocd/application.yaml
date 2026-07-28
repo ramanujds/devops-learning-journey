@@ -1,0 +1,35 @@
+# Argo CD version of the dev/H2 install from ../README.md — same chart,
+# same values-dev.yaml overlay (springProfile: dev, mysql.enabled: false),
+# just applied continuously by Argo CD instead of a one-off `helm install`.
+#
+# Apply into the argocd namespace:
+#   kubectl apply -f applications-and-source-code/part-order-app-java/helm/part-order-app/argocd/application.yaml -n argocd
+#
+# Don't run this alongside a manual `helm install ... -f values-dev.yaml`
+# targeting the same namespace/NodePort — pick one or the other.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: part-order-app-dev
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ramanujds/devops-learning-journey
+    targetRevision: main
+    path: applications-and-source-code/part-order-app-java/helm/part-order-app
+    helm:
+      valueFiles:
+        - values-dev.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: part-order-app
+
+  syncPolicy:
+    automated:
+      prune: true      # delete cluster objects removed from the chart/values
+      selfHeal: true    # revert manual kubectl edits back to match Git
+    syncOptions:
+      - CreateNamespace=true

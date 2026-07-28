@@ -54,6 +54,26 @@ helm install part-order-app . \
 Both releases can be installed side by side (different namespaces, different
 NodePorts), same as the two plain-manifest stacks.
 
+### Argo CD, instead of `helm install`
+
+[`argocd/application.yaml`](argocd/application.yaml) deploys the same
+dev/H2 chart (`values-dev.yaml` — no MySQL) via Argo CD's GitOps loop
+instead of a one-off `helm install`; see
+[`git-ops-argocd/01-argocd-intro.md`](../../../../git-ops-argocd/01-argocd-intro.md)
+for what Argo CD is and how to install it into the cluster first.
+
+```bash
+kubectl apply -f argocd/application.yaml -n argocd
+
+argocd app get part-order-app-dev
+kubectl get all -n part-order-app
+```
+
+Don't run this alongside a manual `helm install -f values-dev.yaml` into
+the same `part-order-app` namespace — Argo CD will fight a release it
+doesn't own. There is no prod/MySQL Argo CD variant here; keep this one
+to dev, same as `values-dev.yaml` itself.
+
 Preview rendered manifests without applying:
 
 ```bash

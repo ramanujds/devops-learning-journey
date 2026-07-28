@@ -283,6 +283,90 @@ Kubernetes only supports upgrading **one minor version at a time**
 (1.29 → 1.30 → 1.31, never 1.29 → 1.31 directly) — skipping a version is
 unsupported and can leave the cluster in a broken state.
 
+### Version skew: how far components are allowed to drift
+
+Control-plane-first isn't just an ordering preference — components have a
+hard-enforced skew policy, and getting it backwards (kubelet ahead of the
+API server) breaks the cluster.
+
+| Component | Allowed relative to `kube-apiserver` |
+| --- | --- |
+| `kube-apiserver` | the newest version in the cluster, always |
+| `kube-controller-manager`, `kube-scheduler`, cloud-controller-manager | same minor, or up to 1 older |
+| `kubelet`, `kube-proxy` | same minor, or up to **3** older |
+| `kubectl` | 1 newer or 1 older |
+
+- this is *why* the upgrade order is control plane → workers, never the
+  reverse — a kubelet newer than the API server is unsupported outright
+- it's also why you can leave older workers un-upgraded for a while after
+  a control-plane upgrade (e.g. mixed-OS-image fleets, staged rollouts) —
+  just not indefinitely, and never past the 3-minor-version ceiling
+- `kubectl version` reports both client and server versions — check it
+  before assuming a given `kubectl` is safe to run against a cluster
+
+### OS and package patching — the part `kubeadm upgrade` doesn't cover
+
+`kubeadm upgrade` only touches Kubernetes components (`kubelet`,
+`kubeadm`, static Pod manifests). The underlying OS — kernel CVEs,
+`containerd`/`runc` security patches, glibc, etc. — is a separate patch
+cycle you own on-prem, and it uses the exact same cordon/drain/uncordon
+safety pattern as a version upgrade:
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Node
+    participant API as API Server
+
+    Admin->>API: kubectl cordon node
+    Admin->>API: kubectl drain node --ignore-daemonsets --delete-emptydir-data
+    Admin->>Node: apt-get upgrade / dnf upgrade, reboot if kernel changed
+    Node->>API: kubelet reconnects, Node Ready
+    Admin->>API: kubectl uncordon node
+```
+
+```bash
+kubectl cordon node-3
+kubectl drain node-3 --ignore-daemonsets --delete-emptydir-data
+
+# on the node itself
+apt-get update && apt-get upgrade -y
+# reboot only if the patch touched the running kernel
+[ -f /var/run/reboot-required ] && reboot
+
+kubectl uncordon node-3
+```
+
+- **patch one node at a time**, same reasoning as Kubernetes upgrades —
+  patching every node simultaneously means simultaneous reboots, which
+  looks identical to an outage to anything depending on that capacity
+- a `PodDisruptionBudget` (see above) protects OS patch rounds exactly the
+  same way it protects Kubernetes upgrades — `drain` doesn't know or care
+  *why* you're draining
+- **kured** (KUbernetes REboot Daemon) automates this loop for
+  unattended OS patching: it runs as a `DaemonSet`, watches for each
+  node's package manager to flag `/var/run/reboot-required`, then
+  cordons, drains, reboots, and uncordons that one node — obeying
+  PodDisruptionBudgets and doing only one node at a time cluster-wide by
+  default (via a lock in a ConfigMap/annotation) — so unattended security
+  patching never turns into a simultaneous multi-node reboot.
+
+```mermaid
+flowchart LR
+    Cron["unattended-upgrades\n(runs on each node, installs patches)"] -->|"flags"| Flag["/var/run/reboot-required"]
+    Flag -->|"watched by"| Kured["kured DaemonSet"]
+    Kured -->|"acquires cluster-wide lock,\nthen cordon+drain+reboot+uncordon"| Node["one node at a time"]
+```
+
+- **stage upgrades and patches through a non-prod cluster first** —
+  the same `kind` cluster from the section below is a reasonable place to
+  rehearse a `kubeadm upgrade` sequence before touching real
+  control-plane Nodes
+- **take an etcd snapshot immediately before any control-plane upgrade**
+  — `kubeadm upgrade apply` migrates etcd's schema as part of the
+  upgrade, and that's precisely the operation you want a rollback path
+  for if it goes wrong
+
 ---
 
 ## Try it yourself locally, with `kind`

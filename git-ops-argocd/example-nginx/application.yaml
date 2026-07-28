@@ -1,0 +1,29 @@
+# Apply this into the argocd namespace:
+#   kubectl apply -f git-ops-argocd/example-nginx/application.yaml -n argocd
+#
+# Argo CD then takes over: it clones repoURL at targetRevision, reads
+# `path`, and continuously applies whatever's in there to the
+# destination namespace. See ../01-argocd-intro.md for the walkthrough.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nginx-demo
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ramanujds/devops-learning-journey
+    targetRevision: main
+    path: git-ops-argocd/example-nginx/app-manifests
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nginx-demo
+
+  syncPolicy:
+    automated:
+      prune: true      # delete cluster objects removed from Git
+      selfHeal: true    # revert manual kubectl edits back to match Git
+    syncOptions:
+      - CreateNamespace=true

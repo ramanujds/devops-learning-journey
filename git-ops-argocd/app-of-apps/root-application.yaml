@@ -1,0 +1,30 @@
+# The one Application you apply by hand, for the two part-order-app
+# services. Everything under apps/ is then created, synced, and pruned by
+# Argo CD itself — see ../01-argocd-intro.md for the walkthrough.
+#
+#   kubectl apply -f git-ops-argocd/app-of-apps/root-application.yaml -n argocd
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: part-order-app-root
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ramanujds/devops-learning-journey
+    targetRevision: main
+    path: git-ops-argocd/app-of-apps/apps
+
+  # the "cluster" this Application manages is argocd itself — its managed
+  # resources are other Application objects, not Deployments/Services
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true      # remove a child Application if its file is deleted from apps/
+      selfHeal: true    # revert manual `kubectl edit`/`argocd app delete` on a child
+    syncOptions:
+      - CreateNamespace=true

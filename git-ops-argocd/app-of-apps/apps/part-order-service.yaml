@@ -1,0 +1,26 @@
+# Child Application, created by ../root-application.yaml — not applied by
+# hand. Plain manifests (dev/H2 profile), same source as
+# ../../../applications-and-source-code/part-order-app-java/k8s/NOTES.md.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: part-order-service
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ramanujds/devops-learning-journey
+    targetRevision: main
+    path: applications-and-source-code/part-order-app-java/k8s/part-order-service
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: part-order-app
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
