@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: part-inventory-service-config
+  namespace: part-order-app-tracing
+data:
+  # dev profile -> H2 in-memory DB (schema.sql/data.sql), no MySQL involved
+  SPRING_PROFILES_ACTIVE: "dev"
+  # OTLP/HTTP endpoint the app exports spans to — the otel-collector Service
+  # defined in ../otel-collector/, same namespace so the short DNS name resolves.
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"

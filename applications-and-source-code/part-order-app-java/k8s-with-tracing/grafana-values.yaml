@@ -1,0 +1,56 @@
+# Grafana Helm values — adds Tempo as a provisioned datasource, wired for
+# trace <-> log correlation with the Loki datasource from
+# k8s-cluster-monitoring-logging/grafana-values.yaml.
+#
+# If Grafana is already installed from that other stack, apply this as an
+# upgrade to the SAME release (adds Tempo alongside Prometheus/Loki, exactly
+# how that stack layered Loki on top of the original Prometheus-only
+# install):
+#   helm upgrade grafana grafana/grafana --version 8.12.0 -f grafana-values.yaml
+#
+# Running this stack on its own instead (no Prometheus/Loki installed)? Drop
+# the Prometheus/Loki blocks below — an unreachable datasource doesn't break
+# Grafana, but there's no reason to provision one you don't have.
+
+adminUser: admin
+adminPassword: "admin123"
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server:80
+        access: proxy
+        isDefault: true
+
+      - name: Loki
+        uid: loki
+        type: loki
+        url: http://loki:3100
+        access: proxy
+        isDefault: false
+        jsonData:
+          # click a traceId=<hex> logged by either service (see
+          # part-*-service/src/main/resources/logback-spring.xml) to jump
+          # straight to that trace in the Tempo datasource below
+          derivedFields:
+            - datasourceUid: tempo
+              matcherRegex: "traceId=([0-9a-f]+)"
+              name: TraceID
+
+      - name: Tempo
+        uid: tempo
+        type: tempo
+        url: http://tempo:3100
+        access: proxy
+        isDefault: false
+        jsonData:
+          tracesToLogsV2:
+            datasourceUid: loki
+            spanStartTimeShift: "-5m"
+            spanEndTimeShift: "5m"
+            filterByTraceID: true
+          serviceMap:
+            datasourceUid: prometheus

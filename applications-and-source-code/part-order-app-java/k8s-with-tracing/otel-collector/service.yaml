@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: part-order-app-tracing
+  labels:
+    app: otel-collector
+spec:
+  # internal only - both app Deployments in this namespace are the only callers
+  type: ClusterIP
+  selector:
+    app: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+    - name: otlp-http
+      port: 4318
+      targetPort: otlp-http

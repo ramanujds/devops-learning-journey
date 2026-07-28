@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: part-order-service-config
+  namespace: part-order-app-tracing
+data:
+  # dev profile -> H2 in-memory DB, no MySQL involved
+  SPRING_PROFILES_ACTIVE: "dev"
+  # same-namespace short DNS name for the inventory Service; used directly by
+  # the @FeignClient url attribute in InventoryServiceClient
+  INVENTORY_SERVICE_URL: "http://part-inventory-service:8080"
+  # OTLP/HTTP endpoint the app exports spans to — same otel-collector Service
+  # part-inventory-service points at, so both services' spans land in the
+  # same collector and the same trace when order-service calls inventory.
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"
