@@ -1,0 +1,7 @@
+replicaCount: 1
+image:
+  repository: caddy
+  tag: "latest"
+service:
+  type: NodePort
+  port: 80

@@ -161,8 +161,8 @@ service:
 ```
 
 ```bash
-helm install web-dev ./nginx-app -f values-dev.yaml -n dev
-helm install web-prod ./nginx-app -f values-prod.yaml -n prod
+helm install web-dev nginx-app -f nginx-app/values-dev.yaml -n dev
+helm install web-prod nginx-app -f nginx-app/values-prod.yaml -n prod
 ```
 
 ```mermaid
