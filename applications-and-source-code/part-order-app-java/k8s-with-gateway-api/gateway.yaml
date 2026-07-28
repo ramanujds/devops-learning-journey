@@ -10,6 +10,10 @@ spec:
   # gke-l7-rilb (regional internal), gke-l7-gxlb (classic, legacy).
   gatewayClassName: gke-l7-global-external-managed
   listeners:
+    # Plain HTTP listener - kept only so http://<ip>/ can 301 to https
+    # instead of just timing out. See httproute.yaml's parts-redirect-route,
+    # which is the only HTTPRoute attached to this listener (via
+    # parentRefs[].sectionName: http) - it carries no app traffic itself.
     - name: http
       port: 80
       protocol: HTTP
@@ -18,5 +22,22 @@ spec:
         # (The alternative, "All", is how you'd let routes in other
         # namespaces share one Gateway/LB - not needed here since this stack
         # is self-contained in one namespace.)
+        namespaces:
+          from: Same
+    # TLS termination happens here: the load balancer decrypts with this
+    # cert, then forwards plain HTTP to the backend Pods - the Pods
+    # themselves never see TLS (same "edge termination" model as
+    # terminating TLS at an Ingress or a reverse proxy). certificateRefs
+    # points at a kubernetes.io/tls Secret; see NOTES.md "TLS termination"
+    # for how to generate one (self-signed, no real domain required).
+    - name: https
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: parts-tls-cert
+      allowedRoutes:
         namespaces:
           from: Same

@@ -5,7 +5,13 @@ metadata:
   namespace: part-order-app-gateway
 spec:
   parentRefs:
+    # sectionName pins this route to the https listener only - the http
+    # listener carries no app traffic, it only redirects (see
+    # parts-redirect-route below). Without sectionName, a route attaches to
+    # every listener that accepts it, which here would mean plain-HTTP
+    # requests hit the app directly, bypassing the redirect entirely.
     - name: parts-gateway
+      sectionName: https
   rules:
     # More specific rule first: part-inventory-service's REST API. Mirrors
     # the /api/parts path rule in ../k8s-with-ingress/ingress.yaml exactly -
@@ -67,3 +73,31 @@ spec:
 #     backendRefs:
 #       - name: part-inventory-service
 #         port: 8080
+
+---
+# Carries no app traffic - its only job is bouncing plain HTTP to HTTPS.
+# Attached solely to the http listener (sectionName: http); parts-route
+# above is attached solely to https, so the two never overlap on the same
+# listener despite both matching "/".
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: parts-redirect-route
+  namespace: part-order-app-gateway
+spec:
+  parentRefs:
+    - name: parts-gateway
+      sectionName: http
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            # port omitted: RequestRedirect defaults to the standard port
+            # for the target scheme (443 for https) when scheme is set and
+            # port isn't.
+            statusCode: 301
