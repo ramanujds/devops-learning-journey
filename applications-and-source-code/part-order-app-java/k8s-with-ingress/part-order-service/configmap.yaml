@@ -8,4 +8,4 @@ data:
   SPRING_PROFILES_ACTIVE: "dev"
   # same-namespace short DNS name for the inventory Service; used directly by
   # the @FeignClient url attribute in InventoryServiceClient
-  INVENTORY_SERVICE_URL: "http://part-inventory-service:8080"
+  INVENTORY_SERVICE_URL: "http://part-inventory-service"

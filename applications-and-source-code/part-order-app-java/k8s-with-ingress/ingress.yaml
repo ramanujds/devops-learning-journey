@@ -3,11 +3,13 @@ kind: Ingress
 metadata:
   name: part-order-app-ingress
   namespace: part-order-app-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
 spec:
   # "gce" is the built-in IngressClass on GKE (Google Cloud Load Balancer,
   # no controller Deployment to install). Switch this one field to "nginx"
   # to move to an ingress-nginx controller - see NOTES.md.
-  ingressClassName: gce
+  # ingressClassName: gce
   rules:
     - http:
         paths:
@@ -22,7 +24,7 @@ spec:
               service:
                 name: part-inventory-service
                 port:
-                  number: 8080
+                  number: 80
           # Catch-all: the human-facing UI.
           - path: /
             pathType: Prefix
@@ -30,4 +32,4 @@ spec:
               service:
                 name: part-order-service
                 port:
-                  number: 8080
+                  number: 80

@@ -17,5 +17,5 @@ spec:
     app: part-inventory-service
   ports:
     - name: http
-      port: 8080
-      targetPort: http
+      port: 80
+      targetPort: 8080
