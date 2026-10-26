@@ -18,3 +18,26 @@ management:
     web:
       exposure:
         include: health
+  otlp:
+    metrics:
+      export:
+        # spring-boot-starter-opentelemetry also auto-configures an OTLP metrics
+        # exporter; this app only wants OTLP for traces (metrics are scraped via
+        # Prometheus elsewhere, see k8s-cluster-monitoring-logging/), so this is
+        # off to avoid periodic connection-refused stack traces when no
+        # collector is listening for metrics too.
+        enabled: false
+  tracing:
+    sampling:
+      # trace every request by default (dev/learning scope); dial this down
+      # in a real prod environment to control span volume/cost.
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          # OTLP/HTTP endpoint spans are exported to. Defaults to a collector
+          # running on localhost (e.g. via `mvnw spring-boot:run`); in
+          # Kubernetes this is overridden to the otel-collector Service, see
+          # k8s-with-tracing/README.md.
+          endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}

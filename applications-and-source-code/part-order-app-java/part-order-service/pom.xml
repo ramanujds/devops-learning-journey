@@ -37,6 +37,15 @@
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
+        <!-- Not pulled in transitively by spring-cloud-starter-openfeign: without it,
+             InventoryServiceClient calls never go through Micrometer's ObservationRegistry,
+             so no client-side span is created and no W3C traceparent header is injected —
+             order-service and part-inventory-service end up in two disconnected traces. -->
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-micrometer</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -90,6 +99,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Distributed tracing: Micrometer's Observation API bridged to OpenTelemetry,
+             exporting finished spans via OTLP (see application.yml:
+             management.opentelemetry.tracing.export.otlp.endpoint).
+             Also gives the Feign client (InventoryServiceClient) automatic client-side spans
+             and W3C traceparent propagation, via spring-cloud-starter-openfeign's
+             MicrometerObservationCapability auto-configuration. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-opentelemetry</artifactId>
         </dependency>
 
     </dependencies>

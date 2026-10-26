@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: part-order-service
+  namespace: part-order-app-tracing
+  labels:
+    app: part-order-service
+spec:
+  # NodePort so the web UI (home/place-order/orders) is reachable from
+  # outside the cluster in a local dev cluster (minikube/kind/Docker Desktop).
+  # 30083: next free NodePort after k8s/ (30080), k8s-with-mysql/ (30081),
+  # k8s-istio/ (30082) — all four stacks can run side by side.
+  type: NodePort
+  selector:
+    app: part-order-service
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      nodePort: 30083

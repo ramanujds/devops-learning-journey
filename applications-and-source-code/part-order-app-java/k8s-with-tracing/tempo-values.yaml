@@ -1,0 +1,28 @@
+# Tempo Helm values — single-binary trace storage backend for a local/dev
+# cluster. Installed with:
+#   helm install tempo grafana/tempo --version 1.24.4 -f tempo-values.yaml -n part-order-app-tracing
+#
+# `grafana/tempo` (as opposed to `grafana/tempo-distributed`) runs Tempo as a
+# single process/StatefulSet — the same "single-binary, filesystem storage,
+# right-sized for a laptop cluster" shape as loki-values.yaml in
+# k8s-cluster-monitoring-logging/, not a real production trace-storage setup.
+
+tempo:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal
+
+persistence:
+  enabled: false
