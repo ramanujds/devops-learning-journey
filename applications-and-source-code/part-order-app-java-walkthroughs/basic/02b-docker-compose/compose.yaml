@@ -1,0 +1,32 @@
+name: part-order-app
+
+services:
+  part-inventory-service:
+    build: ./part-inventory-service
+    image: part-inventory-service:compose
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  part-order-service:
+    build: ./part-order-service
+    image: part-order-service:compose
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      INVENTORY_SERVICE_URL: http://part-inventory-service:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      part-inventory-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

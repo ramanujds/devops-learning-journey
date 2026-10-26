@@ -1,0 +1,42 @@
+# A workload that really does call the Kubernetes API: it may list Pods in its own namespace.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pod-lister
+  namespace: part-order-app
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-lister
+  namespace: part-order-app
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-lister-binding
+  namespace: part-order-app
+subjects:
+  - kind: ServiceAccount
+    name: pod-lister
+    namespace: part-order-app
+roleRef:
+  kind: Role
+  name: pod-lister
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-client
+  namespace: part-order-app
+spec:
+  serviceAccountName: pod-lister
+  containers:
+    - name: curl
+      image: curlimages/curl
+      command: ["sleep", "3600"]
