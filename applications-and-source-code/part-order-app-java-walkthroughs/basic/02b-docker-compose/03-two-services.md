@@ -28,8 +28,8 @@ Append to `compose.yaml`, under `services:`:
 
 ```yaml
   part-order-service:
-    build: ./part-order-service
-    image: part-order-service:compose
+    # build: ./part-order-service
+    image: ram1uj/part-order-service
     environment:
       SPRING_PROFILES_ACTIVE: dev
       INVENTORY_SERVICE_URL: http://part-inventory-service:8080
@@ -44,14 +44,14 @@ name: part-order-app
 
 services:
   part-inventory-service:
-    build: ./part-inventory-service
-    image: part-inventory-service:compose
+    # build: ./part-inventory-service
+    image: ram1uj/part-inventory-service
     environment:
       SPRING_PROFILES_ACTIVE: dev
 
   part-order-service:
-    build: ./part-order-service
-    image: part-order-service:compose
+    # build: ./part-order-service
+    image: ram1uj/part-order-service
     environment:
       SPRING_PROFILES_ACTIVE: dev
       INVENTORY_SERVICE_URL: http://part-inventory-service:8080

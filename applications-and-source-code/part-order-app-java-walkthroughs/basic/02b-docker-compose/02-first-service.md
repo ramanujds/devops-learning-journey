@@ -29,8 +29,8 @@ name: part-order-app
 
 services:
   part-inventory-service:
-    build: ./part-inventory-service
-    image: part-inventory-service:compose
+    # build: ./part-inventory-service
+    image: ram1uj/part-inventory-service
     environment:
       SPRING_PROFILES_ACTIVE: dev
 ```
@@ -45,7 +45,7 @@ There is no `version:` line. Modern Compose ignores it, and recent versions warn
 
 ```bash
 cd ~/docker-lab
-docker compose up -d --build
+docker compose up -d
 ```
 
 `-d` runs it in the background; `--build` forces a rebuild even if the image exists. The first build takes a minute or two; later ones reuse the layers.
