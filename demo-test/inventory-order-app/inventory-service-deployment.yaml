@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: inventory-service-deployment
 spec:
-  replicas: 2
   selector:
     matchLabels:
       app: inventory-service
@@ -36,7 +35,7 @@ spec:
          resources:
           requests:
             cpu: 100m
-            memory: 400Mi
+            memory: 256Mi
           limits:
               cpu: 500m
-              memory: 600Mi
+              memory: 512Mi
