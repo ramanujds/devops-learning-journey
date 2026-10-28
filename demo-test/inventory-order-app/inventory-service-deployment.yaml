@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
        - name: inventory-service-container
-         image: ram1uj/part-inventory-service:latest
+         image: ram1uj/part-inventory-service:v2
          ports:
           - name: http
             containerPort: 8080
@@ -32,3 +32,11 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 15
             failureThreshold: 3
+        
+         resources:
+          requests:
+            cpu: 100m
+            memory: 400Mi
+          limits:
+              cpu: 500m
+              memory: 600Mi

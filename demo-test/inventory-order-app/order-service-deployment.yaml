@@ -20,4 +20,13 @@ spec:
          env:
           - name: INVENTORY_SERVICE_URL
             value: "http://inventory-service"
+          
+         resources:
+            requests:
+              cpu: 100m
+              memory: 400Mi
+            limits:
+              cpu: 500m
+              memory: 600Mi
+
 
