@@ -79,7 +79,7 @@ kubectl apply -n argocd -f \
   https://raw.githubusercontent.com/ramanujds/argocd-inventory-order-app-simple/main/application.yaml
 
 argocd app get inventory-order-app
-argocd app wait inventory-order-app --health --timeout 300
+argocd app wait inventory-order-app --sync --health --timeout 300   # --health alone can return while objects failed to sync
 kubectl get all -n inventory-order-app
 ```
 
@@ -99,6 +99,26 @@ What to notice:
   owns it, so Argo CD's selfHeal doesn't fight autoscaling
 - the Secrets are plaintext in Git: fine for a demo, see
   [02-gitops-problem.md](02-gitops-problem.md) → *What GitOps does not fix*
+- the HPA targets memory at 60% of a 256Mi request, which the Spring app
+  exceeds on its own, so inventory-service keeps scaling up toward
+  `maxReplicas` (2–4 pods seen on Docker Desktop). Argo CD leaves it
+  alone — that's the omitted `replicas` working
+
+**Gotcha: `Healthy` but not `Synced`.** The Services pin NodePorts
+30081/30082. If anything else on the cluster already holds them (the
+`part-order-app-java` stacks use the same ports), those two Services fail
+to create:
+
+```text
+Service "order-service" is invalid: spec.ports[0].nodePort: Invalid value: 30082: provided port is already allocated
+```
+
+The Deployments still come up, so the app shows `Healthy` while
+`Sync Status` is `OutOfSync` — the reason to read both statuses
+([03-argocd-concepts.md](03-argocd-concepts.md)). While a sync is failing,
+Argo CD keeps retrying, and in testing a `selfHeal` revert took ~30 s
+instead of ~1 s. Fix: free the ports, or remove the `nodePort:` lines so
+Kubernetes picks free ones.
 
 ---
 
@@ -204,7 +224,9 @@ git revert HEAD && git push                      # the GitOps way
 
 ```bash
 kubectl delete application inventory-order-app -n argocd
-# the resources-finalizer removes the namespace's workloads too
+# the resources-finalizer removes the Deployments, Services, PVC, Secrets...
+# the namespace itself stays (CreateNamespace doesn't undo itself):
+kubectl delete namespace inventory-order-app
 ```
 
 ---

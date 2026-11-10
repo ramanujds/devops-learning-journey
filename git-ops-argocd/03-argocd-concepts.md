@@ -251,6 +251,9 @@ flowchart LR
 
 - `argocd app delete <app>` cascades by default
 - `kubectl delete application` only cascades if the finalizer is present
+  (verified: with it, Deployments/Services/PVC/Secrets were removed; the
+  namespace stayed). `kubectl apply` prints a warning that it prefers a
+  domain-qualified finalizer name — harmless, this is Argo CD's own name
 - the same applies when a **parent Application prunes a child** (App of
   Apps) — add the finalizer to children you want cleaned up with them
 

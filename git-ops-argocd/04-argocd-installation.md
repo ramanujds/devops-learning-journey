@@ -226,6 +226,14 @@ kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/s
 kubectl delete namespace argocd
 ```
 
+Step 1 only cleans up Applications that carry the
+`resources-finalizer.argocd.argoproj.io` finalizer. Anything without it
+(for example the `part-order-service` / `part-inventory-service` children
+in `argocd-app-of-apps`) leaves its workloads running — in testing,
+`part-order-app` kept both Deployments and Services — so delete those
+namespaces yourself. Namespaces created via `CreateNamespace=true` also
+stay.
+
 Deleting the CRDs or namespace first removes the `Application` objects
 without Argo CD there to process finalizers — workloads stay behind
 orphaned, and a namespace can hang in `Terminating`.
