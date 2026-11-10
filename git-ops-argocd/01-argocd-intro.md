@@ -6,6 +6,15 @@ table: `Application` is a CRD, Argo CD itself is the controller watching
 it. This doc is that pattern, walked through end to end with a real
 install and a real `nginx` deployment.
 
+Deep dives, in reading order:
+
+| Note | Covers |
+| --- | --- |
+| [02-gitops-problem.md](02-gitops-problem.md) | why push-based CI/CD breaks down, the four GitOps principles, what GitOps doesn't fix |
+| [03-argocd-concepts.md](03-argocd-concepts.md) | components, `Application`, sync vs. health, sync policy, waves/hooks, `AppProject` |
+| [04-argocd-installation.md](04-argocd-installation.md) | install flavours, access, first login, repos, uninstall, troubleshooting |
+| [05-deploy-inventory-order-app.md](05-deploy-inventory-order-app.md) | the inventory-order-app via the [simple](https://github.com/ramanujds/argocd-inventory-order-app-simple) and [Helm](https://github.com/ramanujds/argocd-inventory-order-app-helm) repos |
+
 ---
 
 ## The problem: `kubectl apply` from CI is push-based and untrusted
@@ -224,18 +233,22 @@ flowchart TB
     B -->|manages| BRes["Deployment + Service\nns: part-order-app"]
 ```
 
-- [`app-of-apps/root-application.yaml`](app-of-apps/root-application.yaml)
+This lives in its own repo,
+[argocd-app-of-apps](https://github.com/ramanujds/argocd-app-of-apps):
+
+- [`root-application.yaml`](https://github.com/ramanujds/argocd-app-of-apps/blob/main/root-application.yaml)
   — the one thing you apply by hand; its `source.path` is a directory of
   child `Application` YAML, not app manifests
-- [`app-of-apps/apps/part-inventory-service.yaml`](app-of-apps/apps/part-inventory-service.yaml)
+- [`apps/part-inventory-service.yaml`](https://github.com/ramanujds/argocd-app-of-apps/blob/main/apps/part-inventory-service.yaml)
   and
-  [`app-of-apps/apps/part-order-service.yaml`](app-of-apps/apps/part-order-service.yaml)
+  [`apps/part-order-service.yaml`](https://github.com/ramanujds/argocd-app-of-apps/blob/main/apps/part-order-service.yaml)
   — child `Application`s, each pointing at one service's plain manifests
-  under `k8s/` (dev/H2 profile, same as `k8s/NOTES.md`'s apply order —
-  Argo CD just does that apply for you, continuously)
+  under `k8s/` in *this* repo (dev/H2 profile, same as `k8s/NOTES.md`'s
+  apply order — Argo CD just does that apply for you, continuously)
 
 ```bash
-kubectl apply -f git-ops-argocd/app-of-apps/root-application.yaml -n argocd
+kubectl apply -n argocd -f \
+  https://raw.githubusercontent.com/ramanujds/argocd-app-of-apps/main/root-application.yaml
 
 argocd app get part-order-app-root
 kubectl get applications -n argocd
@@ -249,11 +262,13 @@ Each child still syncs independently: `argocd app sync
 part-inventory-service` rolls out just that service without touching
 `part-order-service`, but both were *created* by the one root apply.
 Add a third service the same way — drop another `Application` YAML file
-into `app-of-apps/apps/`, commit, push — `part-order-app-root`'s own
-`automated` sync picks it up, no further `kubectl apply` against the
+into the app-of-apps repo's `apps/`, commit, push — `part-order-app-root`'s
+own `automated` sync picks it up, no further `kubectl apply` against the
 cluster at all. Delete a file from `apps/` and `prune: true` removes
-that child `Application` too (and, since its own `syncPolicy` also
-prunes, the Deployment/Service it created).
+that child `Application` — but only the `Application` object: unless the
+child carries `resources-finalizer.argocd.argoproj.io` (see
+[03-argocd-concepts.md](03-argocd-concepts.md)), the Deployment/Service
+it created keep running, orphaned.
 
 The [`example-nginx/`](example-nginx/) and
 [`part-order-app` Helm](../applications-and-source-code/part-order-app-java/helm/part-order-app/argocd/application.yaml)

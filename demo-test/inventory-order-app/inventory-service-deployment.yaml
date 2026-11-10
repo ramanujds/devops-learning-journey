@@ -13,36 +13,36 @@ spec:
     spec:
       containers:
         - name: inventory-service-container
-          image: ram1uj/part-inventory-service:v2
+          image: ram1uj/part-inventory-service:latest
           ports:
             - name: http
               containerPort: 8080
 
           env:
-            - name: MYSQL_HOST
-              value: mysql-service
-            - name: MYSQL_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: application-secret
-                  key: MYSQL_PORT
-            - name: MYSQL_DATABASE
-              valueFrom:
-                  secretKeyRef:
-                    name: application-secret
-                    key: MYSQL_DB
-            - name: MYSQL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: application-secret
-                  key: MYSQL_USER
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_ROOT_PASSWORD
+          #   - name: MYSQL_HOST
+          #     value: mysql-0.mysql-service.default.svc.cluster.local
+          #   - name: MYSQL_PORT
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: application-secret
+          #         key: MYSQL_PORT
+          #   - name: MYSQL_DATABASE
+          #     valueFrom:
+          #         secretKeyRef:
+          #           name: application-secret
+          #           key: MYSQL_DB
+          #   - name: MYSQL_USER
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: application-secret
+          #         key: MYSQL_USER
+          #   - name: MYSQL_PASSWORD
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: mysql-secret
+          #         key: MYSQL_ROOT_PASSWORD
             - name: SPRING_PROFILES_ACTIVE
-              value: "prod"
+              value: "dev"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -65,3 +65,4 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+      
