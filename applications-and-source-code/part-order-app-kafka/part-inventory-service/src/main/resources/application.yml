@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: part-inventory-service
+
+  # H2 only - stock lives in this pod's memory; schema.sql + data.sql reseed
+  # it (10 parts) on every boot
+  datasource:
+    url: jdbc:h2:mem:part_inventory_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none          # schema.sql owns the table
+  sql:
+    init:
+      mode: always
+  h2:
+    console:
+      enabled: true
+
+  kafka:
+    # localhost:9092 for `./mvnw spring-boot:run` against a local broker;
+    # overridden in Kubernetes by the KAFKA_BOOTSTRAP_SERVERS env var (ConfigMap)
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      # consumer group: every replica of this service shares the topic's
+      # partitions between them (each message handled by exactly one pod)
+      group-id: part-inventory-service
+      # first time this group connects, start from the beginning of the topic,
+      # so orders placed before inventory was up aren't skipped
+      auto-offset-reset: earliest
+      # small batches: when a new replica joins the group (KEDA scale-up),
+      # the rebalance waits for the current batch to finish - 20 records
+      # finish quickly, the default 500 could stall it for minutes
+      max-poll-records: 20
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # ErrorHandlingDeserializer wraps the real JSON deserializer: a message
+      # that isn't valid JSON gets logged and skipped instead of failing (and
+      # being re-polled) forever
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+        # producer sends no type headers -> always deserialize into our own record
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.forvia.partinventoryservice.event.OrderPlacedEvent
+
+app:
+  kafka:
+    topic: part-orders
+  # artificial per-message work, so a backlog can build up and you can watch
+  # KEDA scale on consumer lag (k8s-with-keda/). 0 = off.
+  processing-delay-ms: ${PROCESSING_DELAY_MS:0}
+
+server:
+  port: ${SERVER_PORT:8080}   # SERVER_PORT=8081 when running next to order-service locally
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health

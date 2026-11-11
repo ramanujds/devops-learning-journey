@@ -1,0 +1,44 @@
+# KEDA scales part-inventory-service on Kafka consumer lag (messages waiting
+# on part-orders for the part-inventory-service group), not on CPU.
+#
+# Applying this makes KEDA create and own an HPA named
+# keda-hpa-part-inventory-service. Don't add your own HPA for the same
+# Deployment - two autoscalers would fight over spec.replicas.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: part-inventory-service
+  namespace: part-order-app-kafka
+spec:
+  scaleTargetRef:
+    name: part-inventory-service     # Deployment in the same namespace
+
+  minReplicaCount: 0                 # no lag for cooldownPeriod -> scale to zero
+  maxReplicaCount: 3                 # = partitions of part-orders; a 4th consumer would sit idle
+  pollingInterval: 10                # seconds between lag checks (default 30)
+  cooldownPeriod: 60                 # seconds of zero lag before 1 -> 0 (default 300)
+
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          # HPA default is 300s; shortened so the demo scales back down
+          # within a minute or two instead of five
+          stabilizationWindowSeconds: 30
+
+  triggers:
+    - type: kafka
+      metadata:
+        # Read by the KEDA operator, which runs in the "keda" namespace -
+        # hence the FQDN here and the FQDN advertised listener on the broker
+        bootstrapServers: kafka.part-order-app-kafka.svc.cluster.local:9092
+        consumerGroup: part-inventory-service   # must match spring.kafka.consumer.group-id
+        topic: part-orders
+        # target lag PER REPLICA: desired replicas = ceil(total lag / 10),
+        # capped at the partition count
+        lagThreshold: "10"
+        # lag above this wakes the Deployment from 0 -> 1 (0 = any message)
+        activationLagThreshold: "0"
+        # partitions this group has never committed on: count everything on
+        # them as lag (matches the app's auto-offset-reset: earliest)
+        offsetResetPolicy: earliest

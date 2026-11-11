@@ -1,0 +1,62 @@
+# One Service, two Deployments (v1 and v2).
+# The Service selects only app=backend, so it covers BOTH versions.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: mesh-demo
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: http          # name/appProtocol tells Istio this is HTTP
+      port: 80
+      targetPort: 5678
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-v1
+  namespace: mesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: backend, version: v1 }
+  template:
+    metadata:
+      labels: { app: backend, version: v1 }
+    spec:
+      serviceAccountName: backend
+      containers:
+        - name: backend
+          image: hashicorp/http-echo:1.0
+          args: ["-text=hello from backend v1", "-listen=:5678"]
+          ports:
+            - containerPort: 5678
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-v2
+  namespace: mesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: backend, version: v2 }
+  template:
+    metadata:
+      labels: { app: backend, version: v2 }
+    spec:
+      serviceAccountName: backend
+      containers:
+        - name: backend
+          image: hashicorp/http-echo:1.0
+          args: ["-text=hello from backend v2", "-listen=:5678"]
+          ports:
+            - containerPort: 5678
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend
+  namespace: mesh-demo

@@ -1,0 +1,40 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servicecatalogentries.platform.example.com
+spec:
+  group: platform.example.com
+  scope: Namespaced
+  names:
+    kind: ServiceCatalogEntry
+    plural: servicecatalogentries
+    shortNames: [sce]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:                         # extra columns in `kubectl get sce`
+        - {name: Owner, type: string,  jsonPath: .spec.owner}
+        - {name: Tier,  type: string,  jsonPath: .spec.tier}
+        - {name: Port,  type: integer, jsonPath: .spec.port}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [owner]                         # must be set
+              properties:
+                owner:
+                  type: string
+                tier:
+                  type: string
+                  enum: [critical, standard]            # only these values
+                  default: standard                     # used when left out
+                port:
+                  type: integer
+                  minimum: 1                            # allowed range
+                  maximum: 65535
+                  default: 8080
+                oncall:
+                  type: string

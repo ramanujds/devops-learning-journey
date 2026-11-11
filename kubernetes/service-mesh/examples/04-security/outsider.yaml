@@ -1,0 +1,17 @@
+# A namespace WITHOUT istio-injection, so its Pod has no sidecar
+# (no mesh identity, can only speak plain HTTP).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: outsider
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: outsider
+  namespace: outsider
+spec:
+  containers:
+    - name: curl
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "infinity"]

@@ -1,0 +1,19 @@
+# Only the "client" ServiceAccount may call backend, and only with GET.
+# Once any ALLOW policy selects a workload, everything not allowed is denied.
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: backend-allow-client
+  namespace: mesh-demo
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/mesh-demo/sa/client"]
+      to:
+        - operation:
+            methods: ["GET"]

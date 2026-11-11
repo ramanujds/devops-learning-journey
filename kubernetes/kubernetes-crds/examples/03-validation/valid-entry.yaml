@@ -1,0 +1,7 @@
+apiVersion: platform.example.com/v1alpha1
+kind: ServiceCatalogEntry
+metadata:
+  name: part-inventory-service
+spec:
+  owner: inventory-team
+  # tier and port left out -> defaults are filled in

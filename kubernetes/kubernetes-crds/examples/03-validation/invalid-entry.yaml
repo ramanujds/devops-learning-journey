@@ -1,0 +1,8 @@
+apiVersion: platform.example.com/v1alpha1
+kind: ServiceCatalogEntry
+metadata:
+  name: bad-entry
+spec:
+  # owner missing  -> "required"
+  tier: gold       # not in the enum
+  port: 70000      # above maximum

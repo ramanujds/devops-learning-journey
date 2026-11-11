@@ -1,0 +1,9 @@
+# Every workload in mesh-demo now ACCEPTS mTLS ONLY - plaintext is refused.
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: mesh-demo
+spec:
+  mtls:
+    mode: STRICT

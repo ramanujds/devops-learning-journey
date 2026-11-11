@@ -57,6 +57,20 @@ concept.
 | [07-kubernetes-on-cloud.md](kubernetes-intermediate/07-kubernetes-on-cloud.md) | Creating a real cluster on EKS, GKE, and AKS — same concept as local clusters, provisioned by a cloud provider |
 | [08-node-selection.md](kubernetes-intermediate/08-node-selection.md) | Controlling Pod placement: nodeSelector, node/pod affinity & anti-affinity, taints/tolerations, topology spread constraints — on a 3-node minikube cluster |
 
+## Kubernetes — CRDs (step-by-step series)
+
+[`kubernetes/kubernetes-crds/`](kubernetes/kubernetes-crds/README.md) — 7 short parts:
+your first CRD, validation, then three small use cases (a service catalog, a `WebApp`
+kind with a shell controller, the same `WebApp` in Go with Kubebuilder).
+
+## Kubernetes — Service Mesh with Istio (step-by-step series)
+
+[`kubernetes/service-mesh/`](kubernetes/service-mesh/README.md) — 6 short parts on a
+tiny demo app (a `curl` client calling a `backend` with v1/v2): what a mesh is,
+installing Istio, traffic management (canary, header routing, fault injection,
+retries), strict mTLS + AuthorizationPolicy, and observability (access logs,
+Prometheus, Kiali). Runnable files are in `examples/`.
+
 ---
 
 ## The reference app: `part-order-app-java/`

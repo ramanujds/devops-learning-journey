@@ -1,0 +1,26 @@
+# One entry per component of the part-order-app
+apiVersion: platform.example.com/v1alpha1
+kind: ServiceCatalogEntry
+metadata:
+  name: part-inventory-service
+spec:
+  owner: inventory-team
+---
+apiVersion: platform.example.com/v1alpha1
+kind: ServiceCatalogEntry
+metadata:
+  name: part-order-service
+spec:
+  owner: orders-team
+  tier: critical
+  oncall: orders-pager
+---
+apiVersion: platform.example.com/v1alpha1
+kind: ServiceCatalogEntry
+metadata:
+  name: part-mysql
+spec:
+  owner: dba-team
+  tier: critical
+  oncall: dba-pager
+  port: 3306

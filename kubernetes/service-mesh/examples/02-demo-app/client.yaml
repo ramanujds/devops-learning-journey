@@ -1,0 +1,26 @@
+# A Pod that just sits there so we can `kubectl exec` curl from inside the mesh.
+# Its ServiceAccount becomes its mesh identity (used in Part 4).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: client
+  namespace: mesh-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: mesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: client }
+  template:
+    metadata:
+      labels: { app: client }
+    spec:
+      serviceAccountName: client
+      containers:
+        - name: client
+          image: curlimages/curl:8.11.1
+          command: ["sleep", "infinity"]

@@ -1,0 +1,28 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servicecatalogentries.platform.example.com   # <plural>.<group>
+spec:
+  group: platform.example.com
+  scope: Namespaced
+  names:
+    kind: ServiceCatalogEntry
+    plural: servicecatalogentries
+    shortNames: [sce]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                owner:
+                  type: string
+                tier:
+                  type: string
+                port:
+                  type: integer

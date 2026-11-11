@@ -1,0 +1,8 @@
+apiVersion: platform.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: hello
+spec:
+  image: nginx:1.27
+  port: 80
+  replicas: 2

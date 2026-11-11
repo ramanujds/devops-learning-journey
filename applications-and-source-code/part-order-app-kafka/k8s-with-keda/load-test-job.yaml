@@ -1,0 +1,38 @@
+# Fires ORDERS orders at part-order-service from inside the cluster (no
+# NodePort/port-forward needed), round-robin across the 10 seeded SKUs.
+# Each SKU is a message key, so the load spreads over the 3 partitions.
+#
+#   kubectl apply -f k8s-with-keda/load-test-job.yaml
+#   kubectl -n part-order-app-kafka logs -f job/order-load
+#   kubectl -n part-order-app-kafka delete job order-load   # before re-running
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: order-load
+  namespace: part-order-app-kafka
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: load
+          image: curlimages/curl:8.11.1
+          env:
+            - name: ORDERS
+              value: "500"
+          command:
+            - sh
+            - -c
+            - |
+              i=0
+              while [ "$i" -lt "$ORDERS" ]; do
+                sku=$(printf 'SEAT-SAFE45-%03d' $(( i % 10 + 1 )))
+                curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+                  http://part-order-service:8080/api/orders \
+                  -H 'Content-Type: application/json' \
+                  -d "{\"sku\":\"$sku\",\"quantity\":1}"
+                i=$(( i + 1 ))
+              done | sort | uniq -c
+              echo "sent $ORDERS orders"

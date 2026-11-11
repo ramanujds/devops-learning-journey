@@ -1,0 +1,7 @@
+apiVersion: platform.example.com/v1alpha1
+kind: ServiceCatalogEntry
+metadata:
+  name: typo-demo
+spec:
+  owner: inventory-team
+  prot: 8080          # typo for "port"

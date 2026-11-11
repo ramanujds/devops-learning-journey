@@ -1,0 +1,18 @@
+# Step 3: testers (header x-user: tester) get v2, everyone else gets v1.
+# Rules are checked top to bottom; first match wins.
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: mesh-demo
+spec:
+  hosts: ["backend"]
+  http:
+    - match:
+        - headers:
+            x-user:
+              exact: tester
+      route:
+        - destination: { host: backend, subset: v2 }
+    - route:
+        - destination: { host: backend, subset: v1 }

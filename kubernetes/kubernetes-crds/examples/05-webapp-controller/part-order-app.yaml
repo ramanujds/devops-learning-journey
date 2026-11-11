@@ -1,0 +1,16 @@
+# The part-order-app: one WebApp per service
+apiVersion: platform.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: part-inventory-service
+spec:
+  image: ram1uj/part-inventory-service:latest
+---
+apiVersion: platform.example.com/v1alpha1
+kind: WebApp
+metadata:
+  name: part-order-service
+spec:
+  image: ram1uj/part-order-service:latest
+  env:
+    - {name: INVENTORY_SERVICE_URL, value: "http://part-inventory-service:8080"}

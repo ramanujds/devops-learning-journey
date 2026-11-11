@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: part-order-service
+
+  # H2 only - orders live in this pod's memory and are lost on restart
+  datasource:
+    url: jdbc:h2:mem:partorderdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create        # build the part_orders table from the @Entity, no schema.sql
+  h2:
+    console:
+      enabled: true           # http://localhost:8080/h2-console  (JDBC URL above, user sa)
+
+  kafka:
+    # localhost:9092 for `./mvnw spring-boot:run` against a local broker;
+    # overridden in Kubernetes by the KAFKA_BOOTSTRAP_SERVERS env var (ConfigMap)
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Jackson 3 based JSON serializer (Spring Kafka 4 / Boot 4)
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      acks: all
+      properties:
+        # don't stamp this service's Java class name (__TypeId__ header) on
+        # every message - the consumer has its own OrderPlacedEvent class in a
+        # different package and picks its target type from its own config
+        spring.json.add.type.headers: false
+
+app:
+  kafka:
+    topic: part-orders
+
+server:
+  port: 8080
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health

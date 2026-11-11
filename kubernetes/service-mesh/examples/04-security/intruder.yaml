@@ -1,0 +1,19 @@
+# Inside the mesh (sidecar, valid mTLS cert), but with a different identity.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: intruder
+  namespace: mesh-demo
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: intruder
+  namespace: mesh-demo
+  labels: { app: intruder }
+spec:
+  serviceAccountName: intruder
+  containers:
+    - name: curl
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "infinity"]

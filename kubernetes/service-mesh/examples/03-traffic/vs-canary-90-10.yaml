@@ -1,0 +1,14 @@
+# Step 2: canary - 90% v1, 10% v2. Independent of replica counts.
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: mesh-demo
+spec:
+  hosts: ["backend"]
+  http:
+    - route:
+        - destination: { host: backend, subset: v1 }
+          weight: 90
+        - destination: { host: backend, subset: v2 }
+          weight: 10

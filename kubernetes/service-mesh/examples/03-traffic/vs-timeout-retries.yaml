@@ -1,0 +1,17 @@
+# Step 5: resilience settings - what you'd otherwise code with a library
+# like resilience4j, in every service, in every language.
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: mesh-demo
+spec:
+  hosts: ["backend"]
+  http:
+    - timeout: 3s                 # give up on the whole request after 3s
+      retries:
+        attempts: 3               # retry up to 3 times...
+        perTryTimeout: 1s         # ...giving each try 1s
+        retryOn: 5xx,connect-failure,reset
+      route:
+        - destination: { host: backend, subset: v1 }

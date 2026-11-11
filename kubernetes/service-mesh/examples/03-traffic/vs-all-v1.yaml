@@ -1,0 +1,11 @@
+# Step 1: pin 100% of traffic to v1.
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: mesh-demo
+spec:
+  hosts: ["backend"]
+  http:
+    - route:
+        - destination: { host: backend, subset: v1 }

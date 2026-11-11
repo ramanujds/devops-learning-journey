@@ -1,0 +1,13 @@
+# Names the two versions ("subsets") by Pod label, so routes can target them.
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: backend
+  namespace: mesh-demo
+spec:
+  host: backend
+  subsets:
+    - name: v1
+      labels: { version: v1 }
+    - name: v2
+      labels: { version: v2 }
