@@ -133,6 +133,7 @@ argocd-inventory-order-app-helm/
   inventory-order-app/             # the chart
     Chart.yaml
     values.yaml                    # defaults == the plain manifests
+    values-dev.yaml                # overlay: H2 (no MySQL), 1 replica each, no HPA
     values-prod.yaml               # overlay: more replicas, LoadBalancer
     templates/
       mysql.yaml                   # Secrets, PVC, Service, Deployment (wave 0)
@@ -180,9 +181,13 @@ What to notice:
   `helm template`; it never creates a Helm release. Rollbacks and history
   are Argo CD's (`argocd app history/rollback`)
 - **change values, not templates** — `orderService.replicaCount: 3` in
-  `values.yaml`, commit, push → rolled out. To use the prod overlay, add
-  it to `helm.valueFiles` in `application.yaml`, or set inline overrides
-  with `helm.valuesObject`
+  `values.yaml`, commit, push → rolled out
+- **pick an environment with `helm.valueFiles`** — `[values-dev.yaml]`
+  layers the dev overlay on top of the chart's `values.yaml`; the repo has a
+  ready-made `application-dev.yaml` (own namespace, own NodePort). Steps,
+  precedence rules and gotchas:
+  [README → Choosing an environment](https://github.com/ramanujds/argocd-inventory-order-app-helm#choosing-an-environment-values-devyaml--values-prodyaml).
+  For one-off tweaks use inline `helm.valuesObject`
 - **sync waves** (`argocd.argoproj.io/sync-wave` on each resource) make
   MySQL healthy before inventory starts, and inventory before order.
   Helm ignores the annotation, so the chart still works with a plain

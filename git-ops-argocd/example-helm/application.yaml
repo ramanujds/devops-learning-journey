@@ -1,0 +1,47 @@
+# Helm deployment of the inventory-order-app: same app as the sibling repo
+# argocd-inventory-order-app-simple, but Argo CD renders a Helm chart instead
+# of applying plain YAML.
+#
+#   kubectl apply -f application.yaml -n argocd
+#
+# Argo CD runs `helm template` itself (repo-server) and applies the result —
+# there is no `helm install`, and `helm ls` will show nothing. See README.md.
+#
+# Different Application name + namespace + NodePorts from the simple repo,
+# so both can run side by side on one cluster.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: inventory-order-app-helm
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ramanujds/argocd-inventory-order-app-helm
+    targetRevision: main
+    path: inventory-order-app   # the chart
+    helm:
+      releaseName: inventory-order-app
+      # values.yaml is the chart default; swap in values-prod.yaml for the
+      # bigger overlay (more replicas), or add more files — later wins.
+      valueFiles:
+        - values.yaml
+      # inline overrides, highest precedence — handy for one-off tweaks
+      # without a new values file:
+      # valuesObject:
+      #   orderService:
+      #     replicaCount: 3
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: inventory-order-app-helm
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

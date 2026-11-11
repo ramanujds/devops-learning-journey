@@ -1,0 +1,38 @@
+# Simple Argo CD deployment of the inventory-order-app: one Application
+# pointing at a directory of plain YAML — no Helm, no Kustomize.
+#
+#   kubectl apply -f application.yaml -n argocd
+#
+# Argo CD reads from GitHub (repoURL @ targetRevision), NOT from your working
+# directory — commit + push changes under manifests/ or Argo CD will never
+# see them. See README.md.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: inventory-order-app
+  namespace: argocd
+  finalizers:
+    # deleting this Application (even via kubectl) also deletes everything it
+    # created; without it, `kubectl delete application` orphans the workloads
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ramanujds/argocd-inventory-order-app-simple
+    targetRevision: main
+    # every *.yaml directly in this directory is applied (non-recursive):
+    # order/inventory Deployments + Services, HPA, MySQL, PVC, Secrets.
+    # The manifests have no `namespace:` — destination.namespace supplies it.
+    path: manifests
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: inventory-order-app
+
+  syncPolicy:
+    automated:
+      prune: true      # delete cluster objects removed from Git
+      selfHeal: true    # revert manual kubectl edits back to match Git
+    syncOptions:
+      - CreateNamespace=true
